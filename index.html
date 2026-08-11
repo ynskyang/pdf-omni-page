@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="PDF-Omni: Poincaré Dual Disk Distortion Field-based Recurrent Update for Omnidirectional Stereo Matching">
+  <meta name="keywords" content="Omnidirectional Stereo Matching, Hyperbolic Geometry, Fisheye Distortion, 360 Depth Estimation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF-Omni: Poincaré Dual Disk Distortion Field-based Recurrent Update for Omnidirectional Stereo Matching</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <style>
+    /* 논문 표 스타일: 최고 성능 굵게, 표는 좁은 화면에서 가로 스크롤 */
+    .results-table td, .results-table th { text-align: center; vertical-align: middle; }
+    .results-table .method-col { text-align: left; white-space: nowrap; }
+    .figure-caption { font-size: 0.95rem; color: #555; margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+
+<!-- ===== Hero: 제목 / 학회 / 저자 / 링크 버튼 ===== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">PDF-Omni: Poincar&eacute; Dual Disk Distortion Field-based Recurrent Update for Omnidirectional Stereo Matching</h1>
+          <h3 class="title is-4" style="color:#b5451b;">ECCV 2026</h3>
+          <div class="is-size-5 publication-authors">
+            <!-- TODO: 실제 저자 이름/링크로 교체 -->
+            <span class="author-block">
+              <a href="#">Yunseok Yang</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="#">Eunjin Son</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="#">Sang Jun Lee</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <!-- TODO: 소속 -->
+            <span class="author-block"><sup>1</sup>Jeonbuk National University</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- TODO: 각 버튼의 href="#" 를 실제 링크로 교체. 준비 안 된 링크는 버튼째 주석 처리해도 됩니다. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 티저: 360° depth → 포인트 클라우드 궤도 영상 ===== -->
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video id="teaser" autoplay controls muted loop playsinline style="width:100%;">
+        <source src="./static/videos/pointcloud.mp4" type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered" style="margin-top:1rem;">
+        <b>PDF-Omni</b> estimates 360&deg; metric depth from four fisheye
+        cameras &mdash; each single frame reconstructs the entire surrounding scene as a colored
+        point cloud: road, lane markings, vehicles, pedestrians, and building facades.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Abstract ===== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Omnidirectional stereo matching (OSM) estimates 360&deg; depth from multi-view fisheye
+            images, where inherent fisheye distortion causes sparse matching cues in seam regions.
+            However, existing methods rely on spatially uniform update policies, degrading
+            performance in these challenging regions.
+          </p>
+          <p>
+            To address this limitation, we propose <b>PDF-Omni</b>, a
+            geometry-aware OSM framework built on a <b>Poincar&eacute; Dual Disk (PDD) distortion
+            field</b> that models spatially varying geometric uncertainty across seam regions. We
+            introduce a <b>distortion-informed GRU (DiGRU)</b> with <b>distortion-aware attention
+            (DAA)</b> to selectively expand the receptive field in high-uncertainty regions while
+            preserving efficiency in low-uncertainty ones. We further present a <b>local entropy
+            cumulative (LEC) loss</b> to supervise high-entropy cost distributions in ambiguous
+            regions.
+          </p>
+          <p>
+            Experimental results demonstrate state-of-the-art performance on five datasets, with
+            consistent gains especially in seam regions &mdash; while running 41.9% faster with
+            15.9% less memory than OmniMVS+.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Method ===== -->
+<section class="section" style="background-color:#fafafa;">
+  <div class="container is-max-desktop">
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">Why Seam Regions?</h2>
+        <img src="./static/images/motivation.png" alt="Seam-region error analysis" style="width:100%;">
+        <p class="figure-caption has-text-justified">
+          Depth errors of existing omnidirectional stereo methods concentrate at <b>seam regions</b>
+          (azimuth &theta;=&plusmn;&pi;/2), where fisheye radial distortion is most severe and
+          neither the front nor the back camera provides a dominant viewpoint. Azimuth-wise MAE (c)
+          shows error peaks at seam regions across all prior methods; PDF-Omni flattens these peaks.
+        </p>
+
+        <h2 class="title is-3" style="margin-top:3rem;">Method</h2>
+
+        <!-- 전체 파이프라인 -->
+        <img src="./static/images/overview.png" alt="PDF-Omni architecture overview" style="width:100%;">
+        <p class="figure-caption has-text-justified">
+          <b>Overview of PDF-Omni.</b> A shared 2D CNN with multi-resolution transformers extracts
+          multi-view features from four fisheye images. Spherical sweeping constructs reference and
+          target volumes, from which an encoding volume and a correlation volume are derived;
+          entropy-regularized optimal transport with soft-argmax produces the initial depth. DAA
+          converts the PDD distortion field into a spatial attention map, and DiGRU iteratively
+          refines the prediction through distortion-modulated recurrent updates.
+        </p>
+
+        <!-- PDD distortion field -->
+        <h3 class="title is-4" style="margin-top:3rem;">Poincar&eacute; Dual Disk Distortion Field</h3>
+        <img src="./static/images/pdd_field.png" alt="Poincaré dual disk distortion field" style="width:100%;">
+        <p class="figure-caption has-text-justified">
+          The stereographic projection from the hyperboloid model to the Poincar&eacute; disk is
+          structurally analogous to the projection from the hemisphere to the fisheye image plane:
+          both share a <b>boundary-divergent</b> metric that grows nonlinearly toward the edge. We
+          instantiate two Poincar&eacute; disks at the front and back camera centers; their geodesic
+          distances are fused into a single scalar field that unifies <b>radial distortion
+          magnitude</b> and <b>view-transition ambiguity</b>, peaking exactly at seam regions. The
+          field is precomputed once per resolution and reused across all refinement iterations.
+        </p>
+
+        <!-- DAA + DiGRU -->
+        <h3 class="title is-4" style="margin-top:3rem;">Distortion-Informed Iterative Refinement</h3>
+        <img src="./static/images/digru_daa.png" alt="DAA and DiGRU architecture" style="width:100%;">
+        <p class="figure-caption has-text-justified">
+          <b>DAA</b> injects the PDD distortion field into a CBAM-style attention block, producing a
+          spatial attention map driven by geometric uncertainty rather than appearance alone.
+          <b>DiGRU</b> maintains two GRU branches &mdash; a compact 1&times;1 branch for
+          low-distortion regions and a separable large-kernel (1&times;7 + 7&times;1) branch for
+          seam regions &mdash; and blends them per pixel with the attention map, selectively
+          enlarging the receptive field only where geometric ambiguity demands it.
+        </p>
+
+        <!-- LEC loss (그림 없이 텍스트) -->
+        <h3 class="title is-4" style="margin-top:3rem;">Local Entropy Cumulative Loss</h3>
+        <p class="content has-text-justified">
+          Instead of supervising only the regressed depth value, the LEC loss regularizes the depth
+          probability volume itself: each pixel's supervision radius adapts to the entropy of its
+          cost distribution, relaxing supervision where correspondences are inherently ambiguous. A
+          stop-gradient on the radius prevents the network from inflating entropy to widen its own
+          tolerance, reducing gradient noise from ambiguous seam-region correspondences.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== Qualitative Results ===== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3">When a Structure Enters the High-Distortion Zone</h2>
+        <video autoplay controls muted loop playsinline style="width:100%;">
+          <source src="./static/videos/comparison_depth.mp4" type="video/mp4">
+        </video>
+        <p class="figure-caption has-text-justified">
+          A traffic-signal pillar stands in the high-uncertainty zone flagged by our
+          <b>Poincar&eacute; Dual Disk distortion field</b> (visualized as the red tint on the input
+          panorama, peaking toward the seams at &theta;=&plusmn;&pi;/2). Top: input; middle: ground
+          truth; bottom: a slider sweeping back and forth, directly comparing each prior method
+          with ours. OmniMVS+ erodes the pillar's trunk, RomniStereo detaches its lower half, and
+          MDP-Omni evaporates its mid-section &mdash; while <b>PDF-Omni reconstructs it fully
+          intact</b>, matching ground truth.
+        </p>
+
+        <h2 class="title is-3" style="margin-top:3rem;">Point-Cloud Comparison</h2>
+        <video autoplay controls muted loop playsinline style="width:100%;">
+          <source src="./static/videos/comparison_pointcloud.mp4" type="video/mp4">
+        </video>
+        <p class="figure-caption has-text-justified">
+          The same frame reconstructed as colored point clouds, with the camera orbiting the rig
+          throughout the comparison. From every viewpoint, the pillar and storefront that prior
+          methods scatter into noise remain solid and cleanly separated in
+          <b>PDF-Omni</b>'s reconstruction.
+        </p>
+
+        <h2 class="title is-3" style="margin-top:3rem;">Qualitative Results</h2>
+        <img src="./static/images/qualitative.png" alt="Qualitative comparison" style="width:100%;">
+        <p class="figure-caption has-text-justified">
+          Comparison of fine-tuned models on OmniThings, OmniHouse, Sunny, and real-scene data.
+          PDF-Omni produces sharper depth boundaries and fewer artifacts in seam regions (dashed
+          boxes) than MDP-Omni and RomniStereo.
+        </p>
+        <!-- TODO(시각자료): 원하면 여기에 before/after 슬라이더(img-comparison-slider)나
+             Three.js 인터랙티브 3D 뷰어를 추가할 수 있습니다. -->
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Quantitative Results ===== -->
+<section class="section" style="background-color:#fafafa;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Quantitative Results</h2>
+
+        <p class="content has-text-justified">
+          PDF-Omni achieves <b>state-of-the-art results on all five OSM benchmarks on every
+          metric</b> after fine-tuning, and the largest gains appear exactly where the method is
+          aimed: on OmniHouse the &gt;1 error drops by 49% relative to the best prior method
+          (2.86 vs. 5.61), and on OmniThings from 29.53 to 17.75. Errors below are inverse-depth
+          index errors (%); lower is better.
+        </p>
+
+        <!-- 메인 비교 표: fine-tuned, 5개 데이터셋 × (>1 / MAE) -->
+        <div class="table-container">
+          <table class="table is-striped is-hoverable is-fullwidth results-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="method-col">Method (fine-tuned)</th>
+                <th colspan="2">OmniThings</th>
+                <th colspan="2">OmniHouse</th>
+                <th colspan="2">Sunny</th>
+                <th colspan="2">Cloudy</th>
+                <th colspan="2">Sunset</th>
+              </tr>
+              <tr>
+                <th>&gt;1</th><th>MAE</th>
+                <th>&gt;1</th><th>MAE</th>
+                <th>&gt;1</th><th>MAE</th>
+                <th>&gt;1</th><th>MAE</th>
+                <th>&gt;1</th><th>MAE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="method-col">OmniMVS-ft</td>
+                <td>50.28</td><td>3.52</td>
+                <td>21.09</td><td>1.04</td>
+                <td>13.93</td><td>0.79</td>
+                <td>12.20</td><td>0.72</td>
+                <td>14.14</td><td>0.79</td>
+              </tr>
+              <tr>
+                <td class="method-col">S-OmniMVS-ft</td>
+                <td>&ndash;</td><td>&ndash;</td>
+                <td>6.99</td><td>0.42</td>
+                <td>6.66</td><td>0.47</td>
+                <td>&ndash;</td><td>&ndash;</td>
+                <td>&ndash;</td><td>&ndash;</td>
+              </tr>
+              <tr>
+                <td class="method-col">OmniMVS+<sub>32</sub>-ft</td>
+                <td>44.79</td><td>4.23</td>
+                <td>9.70</td><td>0.64</td>
+                <td>7.48</td><td>0.57</td>
+                <td>7.29</td><td>0.54</td>
+                <td>7.82</td><td>0.58</td>
+              </tr>
+              <tr>
+                <td class="method-col">RomniStereo<sub>32</sub>-ft</td>
+                <td>34.32</td><td>2.81</td>
+                <td>6.02</td><td>0.49</td>
+                <td>5.19</td><td>0.36</td>
+                <td>5.63</td><td>0.39</td>
+                <td>5.53</td><td>0.37</td>
+              </tr>
+              <tr>
+                <td class="method-col">MDP-Omni-ft</td>
+                <td>29.53</td><td>1.96</td>
+                <td>5.61</td><td>0.44</td>
+                <td>4.51</td><td>0.33</td>
+                <td>5.34</td><td>0.36</td>
+                <td>4.90</td><td>0.35</td>
+              </tr>
+              <tr style="background-color:#fff3e6;">
+                <td class="method-col"><b>PDF-Omni-ft (Ours)</b></td>
+                <td><b>17.75</b></td><td><b>1.31</b></td>
+                <td><b>2.86</b></td><td><b>0.23</b></td>
+                <td><b>3.54</b></td><td><b>0.25</b></td>
+                <td><b>3.92</b></td><td><b>0.27</b></td>
+                <td><b>3.93</b></td><td><b>0.27</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Seam vs Non-seam 분석 표 -->
+        <h3 class="title is-4 has-text-centered" style="margin-top:3rem;">Seam-Region Analysis</h3>
+        <p class="content has-text-justified">
+          Evaluated separately on seam bands (width &pi;/4 centered at &theta;=&plusmn;&pi;/2) of
+          Sunny, PDF-Omni achieves the lowest error in <i>both</i> regions, and the seam &harr;
+          non-seam gap is the smallest among all methods (&gt;1 gap of 1.04 percentage points vs.
+          1.83 for MDP-Omni and 1.90 for RomniStereo) &mdash; distortion-informed receptive-field
+          modulation mitigates seam ambiguity without sacrificing non-seam accuracy.
+        </p>
+        <div class="table-container">
+          <table class="table is-striped is-hoverable is-fullwidth results-table">
+            <thead>
+              <tr>
+                <th class="method-col">Method (fine-tuned)</th>
+                <th>Region</th>
+                <th>&gt;1</th><th>&gt;3</th><th>&gt;5</th><th>MAE</th><th>RMS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="method-col" rowspan="2">OmniMVS+<sub>32</sub>-ft</td>
+                <td>Seam</td><td>8.955</td><td>4.191</td><td>2.957</td><td>0.719</td><td>3.214</td>
+              </tr>
+              <tr>
+                <td>Non-Seam</td><td>6.977</td><td>3.354</td><td>2.232</td><td>0.524</td><td>2.244</td>
+              </tr>
+              <tr>
+                <td class="method-col" rowspan="2">RomniStereo<sub>32</sub>-ft</td>
+                <td>Seam</td><td>6.618</td><td>2.757</td><td>1.829</td><td>0.475</td><td>2.369</td>
+              </tr>
+              <tr>
+                <td>Non-Seam</td><td>4.714</td><td>1.726</td><td>1.033</td><td>0.318</td><td>1.628</td>
+              </tr>
+              <tr>
+                <td class="method-col" rowspan="2">MDP-Omni-ft</td>
+                <td>Seam</td><td>5.879</td><td>1.915</td><td>1.206</td><td>0.447</td><td>2.706</td>
+              </tr>
+              <tr>
+                <td>Non-Seam</td><td>4.050</td><td>1.267</td><td>0.745</td><td>0.294</td><td>1.519</td>
+              </tr>
+              <tr style="background-color:#fff3e6;">
+                <td class="method-col" rowspan="2"><b>PDF-Omni-ft (Ours)</b></td>
+                <td><b>Seam</b></td><td><b>4.314</b></td><td><b>1.730</b></td><td><b>1.119</b></td><td><b>0.332</b></td><td><b>1.984</b></td>
+              </tr>
+              <tr style="background-color:#fff3e6;">
+                <td><b>Non-Seam</b></td><td><b>3.270</b></td><td><b>1.173</b></td><td><b>0.687</b></td><td><b>0.229</b></td><td><b>1.258</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 효율성 + 일반화 -->
+        <h3 class="title is-4 has-text-centered" style="margin-top:3rem;">Efficiency &amp; Generalizability</h3>
+        <div class="content has-text-justified">
+          <p>
+            On an RTX 3090, PDF-Omni runs at <b>0.36 s/frame with 5,284 MB</b> of GPU memory
+            &mdash; 41.9% faster and 15.9% lighter than OmniMVS+<sub>32</sub> (0.62 s, 6,284 MB)
+            while being substantially more accurate.
+          </p>
+          <p>
+            DAA+DiGRU also works as a <b>drop-in replacement</b> for the recurrent unit of existing
+            RAFT-based OSM frameworks: plugged into RomniStereo<sub>32</sub>, it reduces &gt;1 error
+            on OmniThings by 15.4% and MAE on OmniHouse by 21.3%, outperforming the
+            Selective-Stereo SRU alternative across all datasets.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== (선택) 발표 영상 — 준비되면 주석 해제 =====
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Video</h2>
+        <div class="publication-video">
+          <iframe src="https://www.youtube.com/embed/VIDEO_ID?rel=0&amp;showinfo=0"
+                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+
+<!-- ===== (선택) OmniProx 데이터셋 섹션 — 공개 시 주석 해제 (Helvipad 페이지 구성 참고)
+<section class="section" style="background-color:#fafafa;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">OmniProx Dataset</h2>
+        <p class="content has-text-justified">
+          촬영 리그 사진 + 센서 구성, 케이스 수, depth 분포 히스토그램, 다운로드 링크,
+          디렉토리 구조를 여기에 넣으세요.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+
+<!-- ===== BibTeX ===== -->
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <!-- TODO: camera-ready 확정 후 실제 저자/서지정보로 교체 -->
+    <pre><code>@inproceedings{pdfomni2026,
+  author    = {TODO: Authors},
+  title     = {PDF-Omni: Poincar{\'e} Dual Disk Distortion Field-based Recurrent Update for Omnidirectional Stereo Matching},
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  year      = {2026},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="#">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="#" class="external-link" disabled>
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <!-- Nerfies 템플릿 라이선스(CC BY-SA 4.0) 조건상 아래 출처 표기는 유지해야 합니다. -->
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            This website is borrowed from the <a
+              href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> project page.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
