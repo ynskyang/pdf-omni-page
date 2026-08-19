@@ -55,10 +55,17 @@
     .pcd-btns { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px;
                 flex-wrap: wrap; z-index: 2; }
     .pcd-btns button { border: 0; border-radius: 6px; padding: 7px 14px; font-size: 0.9rem;
-                       background: rgba(255,255,255,.14); color: #fff; cursor: pointer; }
+                       background: rgba(0,0,0,.55); color: #fff; cursor: pointer;
+                       backdrop-filter: blur(2px); }
     .pcd-btns button.active { background: #fff; color: #222; font-weight: 600; }
     #pcd-hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
                 color: rgba(255,255,255,.75); font-size: 0.85rem; pointer-events: none; }
+    .ref-btns, .pcd-models { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+                             margin: 0.9rem 0 0.2rem; }
+    .ref-btns button { border: 1px solid #d3d6da; border-radius: 999px; padding: 6px 15px;
+                       font-size: 0.9rem; background: #fff; color: #444; cursor: pointer; }
+    .ref-btns button.active { background: #1b8ad4; border-color: #1b8ad4; color: #fff; font-weight: 600; }
+    .pcd-models { position: absolute; top: 52px; left: 10px; justify-content: flex-start; z-index: 2; }
     #pcd-load { position: absolute; inset: 0; display: flex; align-items: center;
                 justify-content: center; color: #fff; font-size: 1rem;
                 background: rgba(14,14,20,.75); z-index: 3; }
@@ -267,63 +274,93 @@
         </p>
 
 
+
         <h2 class="title is-3" style="margin-top:3rem;">Explore the Predictions</h2>
         <p class="figure-caption" style="text-align:center;">
-          Drag the slider &mdash; predicted 360&deg; depth &harr; input RGB.
+          Drag each slider to compare <b>PDF-Omni</b> (right) against a reference (left).
+          Synthetic scenes use the paper's fine-tuned models; the real scene uses models
+          fine-tuned on our own capture.
         </p>
+        <div class="ref-btns"><button data-ref="gt" class="active">Ground Truth</button><button data-ref="rgb">Input RGB</button><button data-ref="mvs">OmniMVS+</button><button data-ref="ros">RomniStereo</button><button data-ref="mdp">MDP-Omni</button></div>
         <div class="columns is-multiline" style="margin-top:0.5rem;">
           <div class="column is-half">
-            <div class="cmp">
-              <img src="./static/images/interactive/things4230_rgb.jpg" alt="RGB panorama">
-              <div class="cmp-top"><img src="./static/images/interactive/things4230_depth.jpg" alt="Predicted depth"></div>
+            <div class="cmp" data-tag="things4360">
+              <img class="cmp-ours" src="./static/images/interactive/things4360_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/things4360_gt.jpg" alt="reference"></div>
               <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
-              <span class="cmp-tag left">Predicted Depth</span>
-              <span class="cmp-tag right">Input RGB</span>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
             </div>
             <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniThings</p>
           </div>
           <div class="column is-half">
-            <div class="cmp">
-              <img src="./static/images/interactive/things4360_rgb.jpg" alt="RGB panorama">
-              <div class="cmp-top"><img src="./static/images/interactive/things4360_depth.jpg" alt="Predicted depth"></div>
+            <div class="cmp" data-tag="things4230">
+              <img class="cmp-ours" src="./static/images/interactive/things4230_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/things4230_gt.jpg" alt="reference"></div>
               <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
-              <span class="cmp-tag left">Predicted Depth</span>
-              <span class="cmp-tag right">Input RGB</span>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
             </div>
             <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniThings</p>
           </div>
           <div class="column is-half">
-            <div class="cmp">
-              <img src="./static/images/interactive/house2270_rgb.jpg" alt="RGB panorama">
-              <div class="cmp-top"><img src="./static/images/interactive/house2270_depth.jpg" alt="Predicted depth"></div>
+            <div class="cmp" data-tag="house2270">
+              <img class="cmp-ours" src="./static/images/interactive/house2270_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/house2270_gt.jpg" alt="reference"></div>
               <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
-              <span class="cmp-tag left">Predicted Depth</span>
-              <span class="cmp-tag right">Input RGB</span>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
             </div>
             <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniHouse</p>
           </div>
           <div class="column is-half">
-            <div class="cmp">
-              <img src="./static/images/interactive/house2130_rgb.jpg" alt="RGB panorama">
-              <div class="cmp-top"><img src="./static/images/interactive/house2130_depth.jpg" alt="Predicted depth"></div>
+            <div class="cmp" data-tag="house2130">
+              <img class="cmp-ours" src="./static/images/interactive/house2130_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/house2130_gt.jpg" alt="reference"></div>
               <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
-              <span class="cmp-tag left">Predicted Depth</span>
-              <span class="cmp-tag right">Input RGB</span>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
             </div>
             <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniHouse</p>
+          </div>
+          <div class="column is-half">
+            <div class="cmp" data-tag="sunny968">
+              <img class="cmp-ours" src="./static/images/interactive/sunny968_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/sunny968_gt.jpg" alt="reference"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">Sunny (driving)</p>
+          </div>
+          <div class="column is-half">
+            <div class="cmp" data-tag="real">
+              <img class="cmp-ours" src="./static/images/interactive/real_ours.jpg" alt="PDF-Omni prediction">
+              <div class="cmp-top"><img class="cmp-ref" src="./static/images/interactive/real_gt.jpg" alt="reference"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Ground Truth</span>
+              <span class="cmp-tag right">PDF-Omni (Ours)</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">Real Scene (ours)</p>
           </div>
         </div>
 
         <h2 class="title is-3" style="margin-top:3rem;">Interactive 3D Point Clouds</h2>
         <p class="figure-caption" style="text-align:center;">
-          Each cloud is reconstructed from a <b>single</b> PDF-Omni prediction.
+          Each cloud is reconstructed from a <b>single</b> prediction &mdash; switch scene and method.
         </p>
         <div id="pcd-wrap">
           <div class="pcd-btns">
             <button data-scene="house2270" class="active">OmniHouse</button>
             <button data-scene="things4360">OmniThings</button>
             <button data-scene="sunny968">Sunny</button>
-            <button data-scene="real2890">Real Scene</button>
+            <button data-scene="real">Real Scene</button>
+          </div>
+          <div class="pcd-btns pcd-models">
+            <button data-model="mvs">OmniMVS+</button>
+            <button data-model="ros">RomniStereo</button>
+            <button data-model="mdp">MDP-Omni</button>
+            <button data-model="ours" class="active">PDF-Omni (Ours)</button>
           </div>
           <canvas id="pcd-canvas"></canvas>
           <div id="pcd-hint">drag to rotate &middot; scroll to zoom &middot; right-drag to pan</div>
@@ -335,8 +372,9 @@
           <source src="./static/videos/real_scene.mp4" type="video/mp4">
         </video>
         <p class="figure-caption has-text-justified">
-          Zero-shot PDF-Omni on our own multi-fisheye rig &mdash; campus driving sequence: four
-          fisheye inputs, stitched RGB panorama, and predicted 360&deg; depth.
+          PDF-Omni on our own multi-fisheye rig, fine-tuned on our real-world benchmark &mdash;
+          four fisheye inputs, stitched RGB panorama, and predicted 360&deg; depth. Pedestrians,
+          building facades, hedges and the road surface are all recovered at metric scale.
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Qualitative Results</h2>
@@ -594,6 +632,20 @@ document.querySelectorAll('.cmp').forEach(function (el) {
   el.addEventListener('pointerdown', function (e) { el.setPointerCapture(e.pointerId); set(e); });
   el.addEventListener('pointermove', function (e) { if (e.buttons) set(e); });
 });
+
+// 기준(왼쪽) 이미지 전환
+document.querySelectorAll('.ref-btns button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.ref-btns button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active');
+    var ref = b.dataset.ref, name = b.textContent;
+    document.querySelectorAll('.cmp').forEach(function (el) {
+      el.querySelector('.cmp-ref').src =
+        './static/images/interactive/' + el.dataset.tag + '_' + ref + '.jpg';
+      el.querySelector('.cmp-tag.left').textContent = name;
+    });
+  });
+});
 </script>
 
 <script type="importmap">
@@ -605,10 +657,10 @@ import { OrbitControls } from './static/js/vendor/OrbitControls.js';
 import { PLYLoader } from './static/js/vendor/PLYLoader.js';
 
 const SCENES = {
-  house2270:  { cam: [-4.95, 4.0, -4.95], target: [0, -0.5, 0], size: 0.035 },
-  things4360: { cam: [-8.0, 9.0, -13.86], target: [0, 0, 0],   size: 0.045 },
-  sunny968:   { cam: [7.07, 6.0, 7.07],   target: [1.5, 0, 0],  size: 0.055 },
-  real2890:   { cam: [6.36, 5.0, -6.36],  target: [0, -0.5, 0], size: 0.045 },
+  house2270:  { cam: [-4.95, 4.0, -4.95], target: [0, -0.5, 0], size: 0.045 },
+  things4360: { cam: [-8.0, 9.0, -13.86], target: [0, 0, 0],   size: 0.055 },
+  sunny968:   { cam: [7.07, 6.0, 7.07],   target: [1.5, 0, 0],  size: 0.070 },
+  real:       { cam: [6.36, 5.0, -6.36],  target: [0, -0.5, 0], size: 0.055 },
 };
 
 const wrap = document.getElementById('pcd-wrap');
@@ -638,37 +690,52 @@ function resize() {
 new ResizeObserver(resize).observe(wrap);
 resize();
 
-function show(tag) {
+let curScene = 'house2270', curModel = 'ours';
+
+function show(tag, model, keepView) {
+  curScene = tag; curModel = model;
+  const key = tag + '_' + model;
   const cfg = SCENES[tag];
   if (points) { scene.remove(points); points = null; }
-  camera.position.set(...cfg.cam);
-  controls.target.set(...cfg.target);
-  controls.update();
+  if (!keepView) {
+    camera.position.set(...cfg.cam);
+    controls.target.set(...cfg.target);
+    controls.update();
+  }
   function attach(geo) {
     points = new THREE.Points(geo, new THREE.PointsMaterial({
       size: cfg.size, vertexColors: true, sizeAttenuation: true }));
     scene.add(points);
     loadEl.style.display = 'none';
   }
-  if (cache[tag]) { attach(cache[tag]); return; }
+  if (cache[key]) { attach(cache[key]); return; }
   loadEl.style.display = 'flex';
   loadEl.textContent = 'Loading point cloud\u2026';
-  loader.load('./static/pointclouds/' + tag + '.ply',
-    geo => { cache[tag] = geo; attach(geo); },
+  loader.load('./static/pointclouds/' + key + '.ply',
+    geo => { cache[key] = geo; attach(geo); },
     undefined,
     () => { loadEl.textContent = 'Failed to load point cloud'; });
 }
 
-document.querySelectorAll('.pcd-btns button').forEach(b => {
+document.querySelectorAll('.pcd-btns button[data-scene]').forEach(b => {
   b.addEventListener('click', () => {
-    document.querySelectorAll('.pcd-btns button').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('button[data-scene]').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
-    show(b.dataset.scene);
+    show(b.dataset.scene, curModel, false);
+  });
+});
+// 모델 전환은 시점을 유지해야 같은 각도에서 직접 비교된다
+document.querySelectorAll('button[data-model]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('button[data-model]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    controls.autoRotate = false;
+    show(curScene, b.dataset.model, true);
   });
 });
 
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
-show('house2270');
+show('house2270', 'ours', false);
 </script>
 
 
