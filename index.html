@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="./static/css/bulma.min.css">
   <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
   <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
@@ -30,6 +29,39 @@
     .results-table td, .results-table th { text-align: center; vertical-align: middle; }
     .results-table .method-col { text-align: left; white-space: nowrap; }
     .figure-caption { font-size: 0.95rem; color: #555; margin-top: 0.75rem; }
+
+    /* RGB↔Depth 비교 슬라이더 */
+    .cmp { position: relative; overflow: hidden; border-radius: 6px; cursor: ew-resize;
+           user-select: none; -webkit-user-select: none; touch-action: none; }
+    .cmp img { width: 100%; display: block; pointer-events: none; }
+    .cmp .cmp-top { position: absolute; inset: 0;
+                    clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0); }
+    .cmp .cmp-bar { position: absolute; top: 0; bottom: 0; left: var(--pos, 50%);
+                    width: 4px; margin-left: -2px; background: #fff;
+                    box-shadow: 0 0 6px rgba(0,0,0,.55); }
+    .cmp .cmp-knob { position: absolute; top: 50%; left: var(--pos, 50%);
+                     transform: translate(-50%, -50%); width: 38px; height: 38px;
+                     border-radius: 50%; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.4);
+                     display: flex; align-items: center; justify-content: center;
+                     font-size: 15px; color: #333; }
+    .cmp .cmp-tag { position: absolute; top: 8px; padding: 3px 10px; border-radius: 5px;
+                    background: rgba(0,0,0,.62); color: #fff; font-size: 0.85rem; }
+    .cmp .cmp-tag.left { left: 8px; }
+    .cmp .cmp-tag.right { right: 8px; }
+
+    /* 3D 뷰어 */
+    #pcd-wrap { position: relative; border-radius: 6px; overflow: hidden; background: #0e0e14; }
+    #pcd-canvas { width: 100%; height: 560px; display: block; touch-action: none; }
+    .pcd-btns { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px;
+                flex-wrap: wrap; z-index: 2; }
+    .pcd-btns button { border: 0; border-radius: 6px; padding: 7px 14px; font-size: 0.9rem;
+                       background: rgba(255,255,255,.14); color: #fff; cursor: pointer; }
+    .pcd-btns button.active { background: #fff; color: #222; font-weight: 600; }
+    #pcd-hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+                color: rgba(255,255,255,.75); font-size: 0.85rem; pointer-events: none; }
+    #pcd-load { position: absolute; inset: 0; display: flex; align-items: center;
+                justify-content: center; color: #fff; font-size: 1rem;
+                background: rgba(14,14,20,.75); z-index: 3; }
   </style>
 </head>
 <body>
@@ -165,10 +197,8 @@
         <h2 class="title is-3">Why Seam Regions?</h2>
         <img src="./static/images/motivation.png" alt="Seam-region error analysis" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          Depth errors of existing omnidirectional stereo methods concentrate at <b>seam regions</b>
-          (azimuth &theta;=&plusmn;&pi;/2), where fisheye radial distortion is most severe and
-          neither the front nor the back camera provides a dominant viewpoint. Azimuth-wise MAE (c)
-          shows error peaks at seam regions across all prior methods; PDF-Omni flattens these peaks.
+          Depth errors of prior methods peak at <b>seam regions</b> (&theta;=&plusmn;&pi;/2), where
+          fisheye distortion is most severe &mdash; PDF-Omni flattens these peaks (c).
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Method</h2>
@@ -176,47 +206,35 @@
         <!-- 전체 파이프라인 -->
         <img src="./static/images/overview.png" alt="PDF-Omni architecture overview" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          <b>Overview of PDF-Omni.</b> A shared 2D CNN with multi-resolution transformers extracts
-          multi-view features from four fisheye images. Spherical sweeping constructs reference and
-          target volumes, from which an encoding volume and a correlation volume are derived;
-          entropy-regularized optimal transport with soft-argmax produces the initial depth. DAA
-          converts the PDD distortion field into a spatial attention map, and DiGRU iteratively
-          refines the prediction through distortion-modulated recurrent updates.
+          <b>Overview.</b> Spherical sweeping builds encoding/correlation volumes from four fisheye
+          views; DAA turns the PDD distortion field into spatial attention that guides DiGRU's
+          iterative refinement.
         </p>
 
         <!-- PDD distortion field -->
         <h3 class="title is-4" style="margin-top:3rem;">Poincar&eacute; Dual Disk Distortion Field</h3>
         <img src="./static/images/pdd_field.png" alt="Poincaré dual disk distortion field" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          The stereographic projection from the hyperboloid model to the Poincar&eacute; disk is
-          structurally analogous to the projection from the hemisphere to the fisheye image plane:
-          both share a <b>boundary-divergent</b> metric that grows nonlinearly toward the edge. We
-          instantiate two Poincar&eacute; disks at the front and back camera centers; their geodesic
-          distances are fused into a single scalar field that unifies <b>radial distortion
-          magnitude</b> and <b>view-transition ambiguity</b>, peaking exactly at seam regions. The
-          field is precomputed once per resolution and reused across all refinement iterations.
+          Two Poincar&eacute; disks at the front/back camera centers share the fisheye's
+          <b>boundary-divergent</b> metric; their geodesic distances fuse into one field that unifies
+          radial distortion and view-transition ambiguity, peaking exactly at the seams.
         </p>
 
         <!-- DAA + DiGRU -->
         <h3 class="title is-4" style="margin-top:3rem;">Distortion-Informed Iterative Refinement</h3>
         <img src="./static/images/digru_daa.png" alt="DAA and DiGRU architecture" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          <b>DAA</b> injects the PDD distortion field into a CBAM-style attention block, producing a
-          spatial attention map driven by geometric uncertainty rather than appearance alone.
-          <b>DiGRU</b> maintains two GRU branches &mdash; a compact 1&times;1 branch for
-          low-distortion regions and a separable large-kernel (1&times;7 + 7&times;1) branch for
-          seam regions &mdash; and blends them per pixel with the attention map, selectively
-          enlarging the receptive field only where geometric ambiguity demands it.
+          <b>DAA</b> derives attention from the PDD field; <b>DiGRU</b> blends small- and
+          large-kernel GRU branches per pixel, widening the receptive field only where geometric
+          ambiguity demands it.
         </p>
 
         <!-- LEC loss (그림 없이 텍스트) -->
         <h3 class="title is-4" style="margin-top:3rem;">Local Entropy Cumulative Loss</h3>
         <p class="content has-text-justified">
-          Instead of supervising only the regressed depth value, the LEC loss regularizes the depth
-          probability volume itself: each pixel's supervision radius adapts to the entropy of its
-          cost distribution, relaxing supervision where correspondences are inherently ambiguous. A
-          stop-gradient on the radius prevents the network from inflating entropy to widen its own
-          tolerance, reducing gradient noise from ambiguous seam-region correspondences.
+          The LEC loss regularizes the depth probability volume itself: each pixel's supervision
+          radius adapts to its cost-distribution entropy, relaxing supervision exactly where
+          correspondences are ambiguous.
         </p>
       </div>
     </div>
@@ -230,28 +248,95 @@
     <div class="columns is-centered has-text-centered">
       <div class="column is-full-width">
         <h2 class="title is-3">When a Structure Enters the High-Distortion Zone</h2>
-        <video autoplay controls muted loop playsinline style="width:100%;">
+        <video controls preload="none" data-lazy muted loop playsinline style="width:100%;">
           <source src="./static/videos/comparison_depth.mp4" type="video/mp4">
         </video>
         <p class="figure-caption has-text-justified">
-          A traffic-signal pillar stands in the high-uncertainty zone flagged by our
-          <b>Poincar&eacute; Dual Disk distortion field</b> (visualized as the red tint on the input
-          panorama, peaking toward the seams at &theta;=&plusmn;&pi;/2). Top: input; middle: ground
-          truth; bottom: a slider sweeping back and forth, directly comparing each prior method
-          with ours. OmniMVS+ erodes the pillar's trunk, RomniStereo detaches its lower half, and
-          MDP-Omni evaporates its mid-section &mdash; while <b>PDF-Omni reconstructs it fully
+          A traffic-signal pillar stands in the high-uncertainty zone flagged by the PDD field (red
+          tint). Prior methods erode, detach, or evaporate the pillar &mdash; <b>PDF-Omni keeps it
           intact</b>, matching ground truth.
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Point-Cloud Comparison</h2>
-        <video autoplay controls muted loop playsinline style="width:100%;">
+        <video controls preload="none" data-lazy muted loop playsinline style="width:100%;">
           <source src="./static/videos/comparison_pointcloud.mp4" type="video/mp4">
         </video>
         <p class="figure-caption has-text-justified">
-          The same frame reconstructed as colored point clouds, with the camera orbiting the rig
-          throughout the comparison. From every viewpoint, the pillar and storefront that prior
-          methods scatter into noise remain solid and cleanly separated in
-          <b>PDF-Omni</b>'s reconstruction.
+          The same frame as point clouds, camera orbiting. Structures that prior methods scatter
+          into noise stay solid with <b>PDF-Omni</b>.
+        </p>
+
+
+        <h2 class="title is-3" style="margin-top:3rem;">Explore the Predictions</h2>
+        <p class="figure-caption" style="text-align:center;">
+          Drag the slider &mdash; predicted 360&deg; depth &harr; input RGB.
+        </p>
+        <div class="columns is-multiline" style="margin-top:0.5rem;">
+          <div class="column is-half">
+            <div class="cmp">
+              <img src="./static/images/interactive/things4230_rgb.jpg" alt="RGB panorama">
+              <div class="cmp-top"><img src="./static/images/interactive/things4230_depth.jpg" alt="Predicted depth"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Predicted Depth</span>
+              <span class="cmp-tag right">Input RGB</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniThings</p>
+          </div>
+          <div class="column is-half">
+            <div class="cmp">
+              <img src="./static/images/interactive/things4360_rgb.jpg" alt="RGB panorama">
+              <div class="cmp-top"><img src="./static/images/interactive/things4360_depth.jpg" alt="Predicted depth"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Predicted Depth</span>
+              <span class="cmp-tag right">Input RGB</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniThings</p>
+          </div>
+          <div class="column is-half">
+            <div class="cmp">
+              <img src="./static/images/interactive/house2270_rgb.jpg" alt="RGB panorama">
+              <div class="cmp-top"><img src="./static/images/interactive/house2270_depth.jpg" alt="Predicted depth"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Predicted Depth</span>
+              <span class="cmp-tag right">Input RGB</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniHouse</p>
+          </div>
+          <div class="column is-half">
+            <div class="cmp">
+              <img src="./static/images/interactive/house2130_rgb.jpg" alt="RGB panorama">
+              <div class="cmp-top"><img src="./static/images/interactive/house2130_depth.jpg" alt="Predicted depth"></div>
+              <div class="cmp-bar"></div><div class="cmp-knob">&#8596;</div>
+              <span class="cmp-tag left">Predicted Depth</span>
+              <span class="cmp-tag right">Input RGB</span>
+            </div>
+            <p class="figure-caption" style="text-align:center; margin-top:0.4rem;">OmniHouse</p>
+          </div>
+        </div>
+
+        <h2 class="title is-3" style="margin-top:3rem;">Interactive 3D Point Clouds</h2>
+        <p class="figure-caption" style="text-align:center;">
+          Each cloud is reconstructed from a <b>single</b> PDF-Omni prediction.
+        </p>
+        <div id="pcd-wrap">
+          <div class="pcd-btns">
+            <button data-scene="house2270" class="active">OmniHouse</button>
+            <button data-scene="things4360">OmniThings</button>
+            <button data-scene="sunny968">Sunny</button>
+            <button data-scene="real2890">Real Scene</button>
+          </div>
+          <canvas id="pcd-canvas"></canvas>
+          <div id="pcd-hint">drag to rotate &middot; scroll to zoom &middot; right-drag to pan</div>
+          <div id="pcd-load">Loading point cloud&hellip;</div>
+        </div>
+
+        <h2 class="title is-3" style="margin-top:3rem;">Real-World Capture</h2>
+        <video controls preload="none" data-lazy muted loop playsinline style="width:100%;">
+          <source src="./static/videos/real_scene.mp4" type="video/mp4">
+        </video>
+        <p class="figure-caption has-text-justified">
+          Zero-shot PDF-Omni on our own multi-fisheye rig &mdash; campus driving sequence: four
+          fisheye inputs, stitched RGB panorama, and predicted 360&deg; depth.
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Qualitative Results</h2>
@@ -276,10 +361,7 @@
         <h2 class="title is-3 has-text-centered">Quantitative Results</h2>
 
         <p class="content has-text-justified">
-          PDF-Omni achieves <b>state-of-the-art results on all five OSM benchmarks on every
-          metric</b> after fine-tuning, and the largest gains appear exactly where the method is
-          aimed: on OmniHouse the &gt;1 error drops by 49% relative to the best prior method
-          (2.86 vs. 5.61), and on OmniThings from 29.53 to 17.75. Errors below are inverse-depth
+          <b>State-of-the-art on all five benchmarks, on every metric.</b> Errors are inverse-depth
           index errors (%); lower is better.
         </p>
 
@@ -359,11 +441,9 @@
         <!-- Seam vs Non-seam 분석 표 -->
         <h3 class="title is-4 has-text-centered" style="margin-top:3rem;">Seam-Region Analysis</h3>
         <p class="content has-text-justified">
-          Evaluated separately on seam bands (width &pi;/4 centered at &theta;=&plusmn;&pi;/2) of
-          Sunny, PDF-Omni achieves the lowest error in <i>both</i> regions, and the seam &harr;
-          non-seam gap is the smallest among all methods (&gt;1 gap of 1.04 percentage points vs.
-          1.83 for MDP-Omni and 1.90 for RomniStereo) &mdash; distortion-informed receptive-field
-          modulation mitigates seam ambiguity without sacrificing non-seam accuracy.
+          Lowest error in <i>both</i> regions, with the smallest seam &harr; non-seam gap
+          (1.04 pp vs. 1.83/1.90) &mdash; seam ambiguity is mitigated without sacrificing non-seam
+          accuracy.
         </p>
         <div class="table-container">
           <table class="table is-striped is-hoverable is-fullwidth results-table">
@@ -503,5 +583,111 @@
   </div>
 </footer>
 
+
+<script>
+document.querySelectorAll('.cmp').forEach(function (el) {
+  function set(e) {
+    var r = el.getBoundingClientRect();
+    var p = (e.clientX - r.left) / r.width * 100;
+    el.style.setProperty('--pos', Math.max(0, Math.min(100, p)) + '%');
+  }
+  el.addEventListener('pointerdown', function (e) { el.setPointerCapture(e.pointerId); set(e); });
+  el.addEventListener('pointermove', function (e) { if (e.buttons) set(e); });
+});
+</script>
+
+<script type="importmap">
+{ "imports": { "three": "./static/js/vendor/three.module.min.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from './static/js/vendor/OrbitControls.js';
+import { PLYLoader } from './static/js/vendor/PLYLoader.js';
+
+const SCENES = {
+  house2270:  { cam: [-4.95, 4.0, -4.95], target: [0, -0.5, 0], size: 0.035 },
+  things4360: { cam: [-8.0, 9.0, -13.86], target: [0, 0, 0],   size: 0.045 },
+  sunny968:   { cam: [7.07, 6.0, 7.07],   target: [1.5, 0, 0],  size: 0.055 },
+  real2890:   { cam: [6.36, 5.0, -6.36],  target: [0, -0.5, 0], size: 0.045 },
+};
+
+const wrap = document.getElementById('pcd-wrap');
+const canvas = document.getElementById('pcd-canvas');
+const loadEl = document.getElementById('pcd-load');
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e0e14);
+const camera = new THREE.PerspectiveCamera(60, 2, 0.05, 300);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.8;
+canvas.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
+
+const loader = new PLYLoader();
+const cache = {};
+let points = null;
+
+function resize() {
+  const w = wrap.clientWidth, h = canvas.clientHeight || 560;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(wrap);
+resize();
+
+function show(tag) {
+  const cfg = SCENES[tag];
+  if (points) { scene.remove(points); points = null; }
+  camera.position.set(...cfg.cam);
+  controls.target.set(...cfg.target);
+  controls.update();
+  function attach(geo) {
+    points = new THREE.Points(geo, new THREE.PointsMaterial({
+      size: cfg.size, vertexColors: true, sizeAttenuation: true }));
+    scene.add(points);
+    loadEl.style.display = 'none';
+  }
+  if (cache[tag]) { attach(cache[tag]); return; }
+  loadEl.style.display = 'flex';
+  loadEl.textContent = 'Loading point cloud\u2026';
+  loader.load('./static/pointclouds/' + tag + '.ply',
+    geo => { cache[tag] = geo; attach(geo); },
+    undefined,
+    () => { loadEl.textContent = 'Failed to load point cloud'; });
+}
+
+document.querySelectorAll('.pcd-btns button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.pcd-btns button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    show(b.dataset.scene);
+  });
+});
+
+(function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+show('house2270');
+</script>
+
+
+<script>
+// 화면에 들어올 때만 영상 로드/재생 — 초기 로딩 부담 감소
+(function () {
+  var vids = document.querySelectorAll('video[data-lazy]');
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var v = e.target;
+      v.preload = 'auto';
+      v.muted = true; v.loop = true; v.playsInline = true;
+      v.play().catch(function () {});
+      io.unobserve(v);
+    });
+  }, { rootMargin: '250px' });
+  vids.forEach(function (v) { io.observe(v); });
+})();
+</script>
 </body>
 </html>
