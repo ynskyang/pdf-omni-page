@@ -162,9 +162,9 @@
         <source src="./static/videos/pointcloud.mp4" type="video/mp4">
       </video>
       <h2 class="subtitle has-text-centered" style="margin-top:1rem;">
-        <b>PDF-Omni</b> estimates 360&deg; metric depth from four fisheye
-        cameras &mdash; each single frame reconstructs the entire surrounding scene as a colored
-        point cloud: road, lane markings, vehicles, pedestrians, and building facades.
+        <b>PDF-Omni</b> estimates 360&deg; metric depth from four fisheye images. A single
+        prediction recovers the surrounding scene as a colored point cloud, including the road
+        surface, lane markings, vehicles, pedestrians, and building facades.
       </h2>
     </div>
   </div>
@@ -195,8 +195,8 @@
           </p>
           <p>
             Experimental results demonstrate state-of-the-art performance on five datasets, with
-            consistent gains especially in seam regions &mdash; while running 41.9% faster with
-            15.9% less memory than OmniMVS+.
+            consistent improvements that are most pronounced in seam regions, while reducing
+            inference time by 41.9% and memory consumption by 15.9% relative to OmniMVS+.
           </p>
         </div>
       </div>
@@ -210,11 +210,13 @@
 
     <div class="columns is-centered has-text-centered">
       <div class="column is-full-width">
-        <h2 class="title is-3">Why Seam Regions?</h2>
+        <h2 class="title is-3">Motivation: Seam Regions</h2>
         <img src="./static/images/motivation.png" alt="Seam-region error analysis" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          Depth errors of prior methods peak at <b>seam regions</b> (&theta;=&plusmn;&pi;/2), where
-          fisheye distortion is most severe &mdash; PDF-Omni flattens these peaks (c).
+          Depth errors of existing methods concentrate at the <b>seam regions</b>
+          (&theta;=&plusmn;&pi;/2), where fisheye distortion is most severe and neither the front
+          nor the back camera provides a dominant viewpoint. The azimuth-wise error profile in (c)
+          shows that PDF-Omni suppresses these peaks.
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Method</h2>
@@ -222,35 +224,36 @@
         <!-- 전체 파이프라인 -->
         <img src="./static/images/overview.png" alt="PDF-Omni architecture overview" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          <b>Overview.</b> Spherical sweeping builds encoding/correlation volumes from four fisheye
-          views; DAA turns the PDD distortion field into spatial attention that guides DiGRU's
-          iterative refinement.
+          <b>Overview.</b> Spherical sweeping constructs encoding and correlation volumes from the
+          four fisheye views. DAA converts the PDD distortion field into a spatial attention map,
+          which in turn guides the iterative refinement performed by DiGRU.
         </p>
 
         <!-- PDD distortion field -->
         <h3 class="title is-4" style="margin-top:3rem;">Poincar&eacute; Dual Disk Distortion Field</h3>
         <img src="./static/images/pdd_field.png" alt="Poincaré dual disk distortion field" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          Two Poincar&eacute; disks at the front/back camera centers share the fisheye's
-          <b>boundary-divergent</b> metric; their geodesic distances fuse into one field that unifies
-          radial distortion and view-transition ambiguity, peaking exactly at the seams.
+          Two Poincar&eacute; disks instantiated at the front and back camera centers share the
+          <b>boundary-divergent</b> metric of the fisheye projection. Their geodesic distances are
+          fused into a single scalar field that jointly encodes radial distortion magnitude and
+          view-transition ambiguity, attaining its maximum at the seam regions.
         </p>
 
         <!-- DAA + DiGRU -->
         <h3 class="title is-4" style="margin-top:3rem;">Distortion-Informed Iterative Refinement</h3>
         <img src="./static/images/digru_daa.png" alt="DAA and DiGRU architecture" style="width:100%;">
         <p class="figure-caption has-text-justified">
-          <b>DAA</b> derives attention from the PDD field; <b>DiGRU</b> blends small- and
-          large-kernel GRU branches per pixel, widening the receptive field only where geometric
-          ambiguity demands it.
+          <b>DAA</b> derives a spatial attention map from the PDD field. <b>DiGRU</b> combines a
+          compact and a large-kernel GRU branch on a per-pixel basis, enlarging the receptive field
+          only where geometric ambiguity requires it.
         </p>
 
         <!-- LEC loss (그림 없이 텍스트) -->
         <h3 class="title is-4" style="margin-top:3rem;">Local Entropy Cumulative Loss</h3>
         <p class="content has-text-justified">
-          The LEC loss regularizes the depth probability volume itself: each pixel's supervision
-          radius adapts to its cost-distribution entropy, relaxing supervision exactly where
-          correspondences are ambiguous.
+          The LEC loss regularizes the depth probability volume rather than the regressed depth
+          alone. The supervision radius of each pixel adapts to the entropy of its cost
+          distribution, relaxing supervision where correspondences are inherently ambiguous.
         </p>
       </div>
     </div>
@@ -263,14 +266,15 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-full-width">
-        <h2 class="title is-3">When a Structure Enters the High-Distortion Zone</h2>
+        <h2 class="title is-3">Behavior in High-Distortion Regions</h2>
         <video controls preload="none" data-lazy muted loop playsinline style="width:100%;">
           <source src="./static/videos/comparison_depth.mp4" type="video/mp4">
         </video>
         <p class="figure-caption has-text-justified">
-          A traffic-signal pillar stands in the high-uncertainty zone flagged by the PDD field (red
-          tint). Prior methods erode, detach, or evaporate the pillar &mdash; <b>PDF-Omni keeps it
-          intact</b>, matching ground truth.
+          A traffic-signal pillar lies within the high-uncertainty region identified by the PDD
+          field, shown as the red tint on the input panorama. Existing methods erode, detach, or
+          omit the pillar, whereas <b>PDF-Omni reconstructs it intact</b>, in agreement with the
+          ground truth.
         </p>
 
         <h2 class="title is-3" style="margin-top:3rem;">Point-Cloud Comparison</h2>
@@ -278,15 +282,17 @@
           <source src="./static/videos/comparison_pointcloud.mp4" type="video/mp4">
         </video>
         <p class="figure-caption has-text-justified">
-          The same frame as point clouds, camera orbiting. Structures that prior methods scatter
-          into noise stay solid with <b>PDF-Omni</b>.
+          The same frame reconstructed as colored point clouds, with the camera orbiting the rig.
+          Structures that existing methods disperse into noise remain coherent under
+          <b>PDF-Omni</b>.
         </p>
 
 
 
-        <h2 class="title is-3" style="margin-top:3rem;">Explore the Predictions</h2>
+        <h2 class="title is-3" style="margin-top:3rem;">Interactive Comparison</h2>
         <p class="figure-caption" style="text-align:center;">
-          Drag each slider to compare <b>PDF-Omni</b> (right) against a reference (left).
+          Each slider compares <b>PDF-Omni</b> (right) with a selectable reference (left). Drag the
+          handle to reveal either side.
         </p>
         <div class="ref-btns"><button data-ref="gt" class="active">Ground Truth</button><button data-ref="rgb">Input RGB</button><button data-ref="mvs">OmniMVS+</button><button data-ref="ros">RomniStereo</button><button data-ref="mdp">MDP-Omni</button></div>
         <div class="columns is-multiline" style="margin-top:0.5rem;">
@@ -344,7 +350,9 @@
 
         <h2 class="title is-3" style="margin-top:3rem;">Interactive 3D Point Clouds</h2>
         <p class="figure-caption" style="text-align:center;">
-          Each cloud is reconstructed from a <b>single</b> prediction &mdash; switch scene and method.
+          Each point cloud is reconstructed from a <b>single</b> prediction. The controls select
+          the scene and the method; the viewpoint is preserved across methods to permit direct
+          comparison.
         </p>
         <div id="pcd-wrap">
           <div class="pcd-btns">
@@ -367,8 +375,8 @@
         <img src="./static/images/qualitative.png" alt="Qualitative comparison" style="width:100%;">
         <p class="figure-caption has-text-justified">
           Comparison of fine-tuned models on OmniThings, OmniHouse, Sunny, and real-scene data.
-          PDF-Omni produces sharper depth boundaries and fewer artifacts in seam regions (dashed
-          boxes) than MDP-Omni and RomniStereo.
+          PDF-Omni yields sharper depth discontinuities and fewer artifacts within the seam regions
+          (dashed boxes) than MDP-Omni and RomniStereo.
         </p>
         <!-- TODO(시각자료): 원하면 여기에 before/after 슬라이더(img-comparison-slider)나
              Three.js 인터랙티브 3D 뷰어를 추가할 수 있습니다. -->
@@ -385,8 +393,8 @@
         <h2 class="title is-3 has-text-centered">Quantitative Results</h2>
 
         <p class="content has-text-justified">
-          <b>State-of-the-art on all five benchmarks, on every metric.</b> Errors are inverse-depth
-          index errors (%); lower is better.
+          PDF-Omni attains the best result on all five benchmarks and on every metric. Values are
+          inverse-depth index errors in percent; lower is better.
         </p>
 
         <!-- 메인 비교 표: fine-tuned, 5개 데이터셋 × (>1 / MAE) -->
@@ -465,9 +473,10 @@
         <!-- Seam vs Non-seam 분석 표 -->
         <h3 class="title is-4 has-text-centered" style="margin-top:3rem;">Seam-Region Analysis</h3>
         <p class="content has-text-justified">
-          Lowest error in <i>both</i> regions, with the smallest seam &harr; non-seam gap
-          (1.04 pp vs. 1.83/1.90) &mdash; seam ambiguity is mitigated without sacrificing non-seam
-          accuracy.
+          PDF-Omni achieves the lowest error in <i>both</i> regions and exhibits the smallest
+          disparity between them (1.04 percentage points, compared with 1.83 and 1.90 for MDP-Omni
+          and RomniStereo). Seam ambiguity is therefore mitigated without a loss of accuracy in the
+          remaining regions.
         </p>
         <div class="table-container">
           <table class="table is-striped is-hoverable is-fullwidth results-table">
@@ -515,13 +524,15 @@
         <h3 class="title is-4 has-text-centered" style="margin-top:3rem;">Efficiency &amp; Generalizability</h3>
         <div class="content has-text-justified">
           <p>
-            On an RTX 3090, PDF-Omni runs at <b>0.36 s/frame with 5,284 MB</b> of GPU memory
-            &mdash; 41.9% faster and 15.9% lighter than OmniMVS+<sub>32</sub> (0.62 s, 6,284 MB)
-            while being substantially more accurate.
+            On an RTX 3090, PDF-Omni requires <b>0.36 s per frame and 5,284 MB</b> of GPU memory,
+            corresponding to a 41.9% reduction in runtime and a 15.9% reduction in memory relative
+            to OmniMVS+<sub>32</sub> (0.62 s, 6,284 MB), while attaining substantially higher
+            accuracy.
           </p>
           <p>
-            DAA+DiGRU also works as a <b>drop-in replacement</b> for the recurrent unit of existing
-            RAFT-based OSM frameworks: plugged into RomniStereo<sub>32</sub>, it reduces &gt;1 error
+            DAA and DiGRU further serve as a <b>drop-in replacement</b> for the recurrent unit of
+            existing RAFT-based OSM frameworks. Integrated into RomniStereo<sub>32</sub>, they
+            reduce the &gt;1 error
             on OmniThings by 15.4% and MAE on OmniHouse by 21.3%, outperforming the
             Selective-Stereo SRU alternative across all datasets.
           </p>
@@ -532,7 +543,7 @@
   </div>
 </section>
 
-<!-- ===== (선택) 발표 영상 — 준비되면 주석 해제 =====
+<!-- ===== (선택) 발표 영상: 준비되면 주석 해제 =====
 <section class="section">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
@@ -548,7 +559,7 @@
 </section>
 -->
 
-<!-- ===== (선택) OmniProx 데이터셋 섹션 — 공개 시 주석 해제 (Helvipad 페이지 구성 참고)
+<!-- ===== (선택) OmniProx 데이터셋 섹션: 공개 시 주석 해제 (Helvipad 페이지 구성 참고)
 <section class="section" style="background-color:#fafafa;">
   <div class="container is-max-desktop">
     <div class="columns is-centered">
@@ -725,7 +736,7 @@ show('house2337', 'ours', false);
 
 
 <script>
-// 화면에 들어올 때만 영상 로드/재생 — 초기 로딩 부담 감소
+// 화면에 들어올 때만 영상 로드/재생 (초기 로딩 부담 감소)
 (function () {
   var vids = document.querySelectorAll('video[data-lazy]');
   var io = new IntersectionObserver(function (entries) {
